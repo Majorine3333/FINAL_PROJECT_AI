@@ -1,0 +1,7 @@
+streamlit==1.37.1
+ultralytics
+Pillow
+numpy
+torch
+openai
+python-dotenv
