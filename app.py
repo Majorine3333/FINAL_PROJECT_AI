@@ -13,7 +13,8 @@ model = YOLO(model_path)
 
 # Define your prediction function
 def read_and_detect(image_array):
-    results = model.predict(image_array)
+    image_rgb = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+    results = model.predict(image_rgb )
     result = results[0]
 
 #     # Extract class names and probabilities
@@ -67,8 +68,7 @@ if uploaded_file is not None:
     if st.button('Process Image'):
 
         #Convert the image to RGB
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_array = np.array(image_rgb)
+        image_array = np.array(image)
         tumor_type,confidence_score = read_and_detect(image_array)
         tumor_info = get_tumor_info(tumor_type)
         st.write(f"Predicted Tumor Type: {tumor_type} and confidence score is{confidence_score} ")
