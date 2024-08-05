@@ -1,9 +1,0 @@
-streamlit 
-ultralytics
-numpy
-openai
-opencv-python-headless==4.7.0.72
-torch
-Pillow
-python-dotenv
-opencv-python
