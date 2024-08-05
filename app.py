@@ -3,9 +3,10 @@ from ultralytics import YOLO
 from PIL import Image
 import numpy as np
 import openai
+import torch
 
 # Load the model
-model_path = "C:/Users/Naa Lamiokor/Desktop/Intro to AI/AI project deployment Thonny/trained_model (1).pt"
+model_path = "C:/Users/hp/Desktop/FINAL_PROJECT_AI/trained_model (1).pt"
 model = YOLO(model_path)
 
 
