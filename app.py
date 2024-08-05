@@ -1,4 +1,4 @@
-import streamlit as st
+from flask import Flask, request, render_template, jsonify
 from ultralytics import YOLO
 from PIL import Image
 import numpy as np
@@ -11,31 +11,55 @@ import os
 load_dotenv()
 
 # Access environment variables
-api_key = st.secrets['OPENAI_API_KEY']
+api_key = os.getenv('OPENAI_API_KEY')
 
 # Load the model
-model_path = "C:/Users/hp/Desktop/FINAL_PROJECT_AI/trained_model (1).pt"
+model_path = "C:/Users/hp/Downloads/trained_model (2).pt"
 model = YOLO(model_path)
 
+app = Flask(__name__)
+
+# Define the target size for the YOLO model
+TARGET_SIZE = (640, 640)  # Resize to this size
+
+def resize_image(image, target_size=TARGET_SIZE):
+    # Resize image to the target size
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    # Resize image to the target size
+    resized_image = image.resize(target_size, Image.BILINEAR)
+    return np.array(resized_image)
 
 # Define your prediction function
 def read_and_detect(image_array):
-    image_tensor = torch.from_numpy(image_array).float()
-    image_tensor = image_tensor.permute(2, 0, 1).unsqueeze(0)
-    results = model(image_tensor)
-    tumor_type = results[0].argmax().item()
-    return tumor_type
+    # Resize image to match model input requirements
+    image_array_resized = resize_image(Image.fromarray(image_array))
+    
+    # Convert to tensor and adjust dimensions for the model
+    image_tensor = torch.from_numpy(image_array_resized).float()
+    image_tensor = image_tensor.permute(2, 0, 1).unsqueeze(0)  # Shape (1, 3, 640, 640)
+    
+    # Perform detection
+  
+    results = model.predict(image_tensor)
+    result = results[0]
 
+#     # Extract class names and probabilities
+    class_names = result.names
+    probs = result.probs.data.tolist()  # Convert probabilities to list
+    max_prob_index = np.argmax(probs)   # Index of highest probability
+    tumor_type = class_names[max_prob_index].upper()  # Get the class name with the highest probability
+    confidence_score = probs[max_prob_index] 
+    return tumor_type,confidence_score
 
 # Define your function to generate tumor information
 def get_tumor_info(tumor_type):
     openai.api_key = api_key
-# Load the model  # Replace with your API key
 
     tumor_descriptions = {
-        0: "No Tumor detected.",
+        0: "notumor",
         1: "glioma",
-        2: "pituitary tumor",
+        2: "pituitary",
         3: "meningioma"
     }
 
@@ -44,7 +68,7 @@ def get_tumor_info(tumor_type):
     prompt = f"Please provide detailed information about {tumor_name}. Include symptoms, treatment options, and general facts."
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
@@ -53,65 +77,23 @@ def get_tumor_info(tumor_type):
 
     return response.choices[0].message['content']
 
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return jsonify({"error": "No file part"})
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"})
+        if file:
+            image = Image.open(file)
+            image_array = np.array(image)
+            tumor_type,confidence_score = read_and_detect(image_array)
+            tumor_info = get_tumor_info(tumor_type)
+            return render_template('result.html', tumor_type=tumor_type,confidence_score=confidence_score, tumor_info=tumor_info)
 
-# Streamlit app
-st.title("Brain Tumor Detection and Information Generator")
+    return render_template('index.html')
 
-st.write("Kindly upload a brain scan image to predict if there is a tumor growing.")
+if __name__ == '__main__':
+    app.run(debug=True)
 
-# Image upload
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption='Uploaded Image', use_column_width=True)
-
-    # Button to process the image
-    if st.button('Process Image'):
-        image_array = np.array(image)
-        tumor_type = read_and_detect(image_array)
-        tumor_info = get_tumor_info(tumor_type)
-        st.write(f"Predicted Tumor Type: {tumor_type}")
-        st.write("Information about the tumor:")
-        st.write(tumor_info)
-
-# former app
-
-# import streamlit as st
-# import torch
-# from ultralytics import YOLO
-# from PIL import Image
-# import numpy as np
-#
-# # Load the model
-# model_path = '/content/drive/MyDrive/trained_model (1).pt'
-# model = YOLO(model_path)  # Adjust based on how you initialize your model
-#
-# # Streamlit app
-# st.title("Brain Tumor Detection and Information Generator")
-#
-# st.write("Kindly upload a brain scan image to predict if there is a tumor growing.")
-# # st.write("Do you want detailed information about the tumor ?")
-#
-#
-# # Image upload
-# uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-#
-# if uploaded_file is not None:
-#     image = Image.open(uploaded_file)
-#     st.image(image, caption='Uploaded Image', use_column_width=True)
-#
-#     # Convert the image to a format suitable for your model
-#     image_array = np.array(image)
-#
-#     # Predict tumor type
-#     tumor_type = read_and_detect(image_array)
-#
-#     # Generate tumor information
-#     tumor_info = get_tumor_info(tumor_type)
-#
-#     st.write(f"Predicted Tumor Type: {tumor_type}")
-#     st.write("Information about the tumor:")
-#     st.write(tumor_info)
-#
-#
