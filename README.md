@@ -1,4 +1,4 @@
-*<h1>README for Brain Tumor Detection App* 
+*<h1>README for Brain Tumor Detection App using yolov8 pretrained model and LLM for education* 
 
 <h2>Overview</h2>
 Our brain tumor detection application app is a web application that uses a deep learning model, YoloV8, to analyze uploaded medical brain images and determine whether they show a brain tumor or not. If a tumor is detected, the app would then classify the tumor under the 3 main classes of brain tumors and provide detailed information to the user about the tumor type. We built the app with Flask and used the YoloV8 model for our image classification and the ChatGPT API for generating descriptive information.
