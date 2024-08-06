@@ -35,5 +35,5 @@ Framework : Flask for the web interface. <br>
 Solution: Ensure the image format is either .jpg, .jpeg or.png and the file is not corrupted. <br>2. Issue: The app crashes or returns an error.
 Solution: Check the console for error messages and ensure all dependencies are correctly installed
 
-DEMO VIDEO
-https://youtu.be/0tJry2fU9AM
+<h2>DEMO VIDEO </h2>
+https://youtu.be/0tJry2fU9AM 
